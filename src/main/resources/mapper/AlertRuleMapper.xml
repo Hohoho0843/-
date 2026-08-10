@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iot.platform.mapper.AlertRuleMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_rule (device_id, metric_type, operator, threshold, enabled)
+        VALUES (#{deviceId}, #{metricType}, #{operator}, #{threshold}, #{enabled})
+    </insert>
+
+    <select id="findEnabledRules" resultType="com.iot.platform.entity.AlertRule">
+        SELECT id, device_id AS deviceId, metric_type AS metricType,
+               operator, threshold, enabled, create_time AS createTime
+        FROM alert_rule
+        WHERE enabled = 1
+    </select>
+</mapper>

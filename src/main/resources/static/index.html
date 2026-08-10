@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>物联网设备管理平台</title>
+  <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+  <div class="app-layout">
+    <header class="app-header">
+      <h1>物联网设备管理平台</h1>
+      <div class="header-right">
+        <span class="username" id="headerUsername"></span>
+        <button class="btn-logout" onclick="logout()">退出登录</button>
+      </div>
+    </header>
+
+    <div class="app-body">
+      <aside class="sidebar">
+        <div class="sidebar-title">功能模块</div>
+        <ul class="nav-list">
+          <li class="nav-item active" data-page="overview">
+            <span class="nav-icon"></span> 数据概览
+          </li>
+          <li class="nav-item" data-page="operation">
+            <span class="nav-icon"></span> 设备操作
+          </li>
+          <li class="nav-item" data-page="devices">
+            <span class="nav-icon"></span> 设备列表
+          </li>
+          <li class="nav-item" data-page="sensor">
+            <span class="nav-icon"></span> 传感器数据
+          </li>
+          <li class="nav-item" data-page="alerts">
+            <span class="nav-icon"></span> 告警记录
+          </li>
+        </ul>
+      </aside>
+
+      <main class="main-content">
+        <!-- 数据概览 -->
+        <section class="page-section active" id="page-overview">
+          <h2 class="section-title">数据概览</h2>
+          <div class="cards">
+            <div class="card">
+              <div class="label">设备总数</div>
+              <div class="value blue" id="totalDevices">-</div>
+            </div>
+            <div class="card">
+              <div class="label">在线设备</div>
+              <div class="value green" id="onlineDevices">-</div>
+            </div>
+            <div class="card">
+              <div class="label">离线设备</div>
+              <div class="value red" id="offlineDevices">-</div>
+            </div>
+            <div class="card">
+              <div class="label">待处理告警</div>
+              <div class="value yellow" id="pendingAlerts">-</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 设备操作 -->
+        <section class="page-section" id="page-operation">
+          <h2 class="section-title">设备操作</h2>
+          <div class="panel">
+            <p style="color:#94a3b8;font-size:14px;margin-bottom:16px;">选择设备执行数据上报操作</p>
+            <div class="actions">
+              <button class="btn" onclick="simulateReport('DEV-001')">DEV-001 数据上报</button>
+              <button class="btn" onclick="simulateReport('DEV-002')">DEV-002 数据上报</button>
+              <button class="btn secondary" onclick="loadAll()">刷新数据</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 设备列表 -->
+        <section class="page-section" id="page-devices">
+          <h2 class="section-title">设备列表</h2>
+          <div class="panel">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>编码</th>
+                  <th>名称</th>
+                  <th>类型</th>
+                  <th>位置</th>
+                  <th>状态</th>
+                  <th>最后在线</th>
+                </tr>
+              </thead>
+              <tbody id="deviceTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 传感器数据 -->
+        <section class="page-section" id="page-sensor">
+          <h2 class="section-title">传感器数据</h2>
+          <div class="panel">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>设备</th>
+                  <th>温度(℃)</th>
+                  <th>湿度(%)</th>
+                  <th>空气质量</th>
+                  <th>上报时间</th>
+                </tr>
+              </thead>
+              <tbody id="dataTable"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 告警记录 -->
+        <section class="page-section" id="page-alerts">
+          <h2 class="section-title">告警记录</h2>
+          <div class="panel">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>设备</th>
+                  <th>指标</th>
+                  <th>当前值</th>
+                  <th>阈值</th>
+                  <th>状态</th>
+                  <th>时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="alertTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <footer class="app-footer">作者:Hohoho</footer>
+  </div>
+
+  <!-- 欢迎弹窗 -->
+  <div class="modal-overlay" id="welcomeModal">
+    <div class="modal-box">
+      <h3>欢迎登录</h3>
+      <p id="welcomeText"></p>
+      <button class="btn" onclick="closeWelcome()">确 定</button>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error('redirect');
+
+    const username = getCurrentUser();
+    document.getElementById('headerUsername').textContent = username;
+
+    if (shouldShowWelcome()) {
+      document.getElementById('welcomeText').textContent = username + '，欢迎登录';
+      document.getElementById('welcomeModal').classList.add('show');
+    }
+
+    function closeWelcome() {
+      document.getElementById('welcomeModal').classList.remove('show');
+      markWelcomeShown();
+    }
+
+    document.querySelectorAll('.nav-item').forEach(item => {
+      item.addEventListener('click', function () {
+        const page = this.dataset.page;
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        this.classList.add('active');
+        document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+        document.getElementById('page-' + page).classList.add('active');
+      });
+    });
+
+    async function fetchJson(url, options) {
+      const res = await fetch(url, options);
+      const json = await res.json();
+      if (json.code !== 200) throw new Error(json.message);
+      return json.data;
+    }
+
+    async function loadOverview() {
+      const data = await fetchJson('/api/dashboard/overview');
+      document.getElementById('totalDevices').textContent = data.totalDevices;
+      document.getElementById('onlineDevices').textContent = data.onlineDevices;
+      document.getElementById('offlineDevices').textContent = data.offlineDevices;
+      document.getElementById('pendingAlerts').textContent = data.pendingAlerts;
+
+      const tbody = document.getElementById('deviceTable');
+      if (!data.devices || data.devices.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="6">暂无设备数据</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.devices.map(d => `
+        <tr>
+          <td>${d.deviceCode}</td>
+          <td>${d.deviceName}</td>
+          <td>${d.deviceType}</td>
+          <td>${d.location || '-'}</td>
+          <td class="${d.status === 'ONLINE' ? 'status-online' : 'status-offline'}">${d.status === 'ONLINE' ? '在线' : '离线'}</td>
+          <td>${d.lastOnlineTime || '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadSensorData() {
+      const data = await fetchJson('/api/sensor-data?pageNum=1&pageSize=20');
+      const tbody = document.getElementById('dataTable');
+      if (!data.list || data.list.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="5">暂无传感器数据</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.list.map(d => `
+        <tr>
+          <td>${d.deviceName}（${d.deviceCode}）</td>
+          <td>${d.temperature ?? '-'}</td>
+          <td>${d.humidity ?? '-'}</td>
+          <td>${d.airQuality ?? '-'}</td>
+          <td>${d.reportTime}</td>
+        </tr>
+      `).join('');
+    }
+
+    async function loadAlerts() {
+      const data = await fetchJson('/api/alerts/records?pageNum=1&pageSize=20');
+      const tbody = document.getElementById('alertTable');
+      if (!data.list || data.list.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="7">暂无告警记录</td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.list.map(a => `
+        <tr>
+          <td>${a.deviceName || a.deviceId}</td>
+          <td>${formatMetric(a.metricType)}</td>
+          <td>${a.actualValue}</td>
+          <td>${a.threshold}</td>
+          <td class="${a.status === 'PENDING' ? 'status-pending' : 'status-online'}">${a.status === 'PENDING' ? '待处理' : '已处理'}</td>
+          <td>${a.createTime}</td>
+          <td>${a.status === 'PENDING' ? `<button class="btn small" onclick="resolveAlert(${a.id})">处理</button>` : '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    function formatMetric(type) {
+      const map = { temperature: '温度', humidity: '湿度', air_quality: '空气质量' };
+      return map[type] || type;
+    }
+
+    async function simulateReport(deviceCode) {
+      const payload = {
+        deviceCode,
+        temperature: +(20 + Math.random() * 20).toFixed(1),
+        humidity: +(40 + Math.random() * 45).toFixed(1),
+        airQuality: Math.floor(60 + Math.random() * 120)
+      };
+      await fetchJson('/api/sensor-data/simulate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      await loadAll();
+    }
+
+    async function resolveAlert(id) {
+      await fetchJson('/api/alerts/records/' + id + '/resolve', { method: 'PUT' });
+      await loadAll();
+    }
+
+    async function loadAll() {
+      await Promise.all([loadOverview(), loadSensorData(), loadAlerts()]);
+    }
+
+    loadAll().catch(e => alert('数据加载失败：' + e.message));
+  </script>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iot.platform.mapper.DeviceMapper">
+
+    <resultMap id="DeviceMap" type="com.iot.platform.entity.Device">
+        <id property="id" column="id"/>
+        <result property="deviceCode" column="device_code"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="location" column="location"/>
+        <result property="status" column="status"/>
+        <result property="lastOnlineTime" column="last_online_time"/>
+        <result property="createTime" column="create_time"/>
+        <result property="updateTime" column="update_time"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO device (device_code, device_name, device_type, location, status)
+        VALUES (#{deviceCode}, #{deviceName}, #{deviceType}, #{location}, #{status})
+    </insert>
+
+    <update id="update">
+        UPDATE device
+        <set>
+            <if test="deviceName != null">device_name = #{deviceName},</if>
+            <if test="deviceType != null">device_type = #{deviceType},</if>
+            <if test="location != null">location = #{location},</if>
+            update_time = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM device WHERE id = #{id}
+    </delete>
+
+    <select id="findById" resultMap="DeviceMap">
+        SELECT * FROM device WHERE id = #{id}
+    </select>
+
+    <select id="findByCode" resultMap="DeviceMap">
+        SELECT * FROM device WHERE device_code = #{deviceCode}
+    </select>
+
+    <select id="findList" resultMap="DeviceMap">
+        SELECT * FROM device
+        <where>
+            <if test="keyword != null and keyword != ''">
+                AND (device_code LIKE CONCAT('%', #{keyword}, '%')
+                OR device_name LIKE CONCAT('%', #{keyword}, '%')
+                OR location LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+        </where>
+        ORDER BY create_time DESC
+    </select>
+
+    <update id="updateStatus">
+        UPDATE device
+        SET status = #{status},
+            last_online_time = #{lastOnlineTime,jdbcType=TIMESTAMP},
+            update_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="markOfflineBefore">
+        UPDATE device
+        SET status = 'OFFLINE', update_time = CURRENT_TIMESTAMP
+        WHERE status = 'ONLINE'
+          AND (last_online_time IS NULL OR last_online_time &lt; #{deadline,jdbcType=TIMESTAMP})
+    </update>
+</mapper>

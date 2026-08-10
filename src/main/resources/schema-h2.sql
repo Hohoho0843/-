@@ -1,0 +1,52 @@
+CREATE TABLE IF NOT EXISTS device (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_code VARCHAR(64) NOT NULL UNIQUE,
+    device_name VARCHAR(128) NOT NULL,
+    device_type VARCHAR(64) NOT NULL,
+    location VARCHAR(256),
+    status VARCHAR(16) NOT NULL DEFAULT 'OFFLINE',
+    last_online_time TIMESTAMP,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    update_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS sensor_data (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_id BIGINT NOT NULL,
+    temperature DECIMAL(5,2),
+    humidity DECIMAL(5,2),
+    air_quality INT,
+    report_time TIMESTAMP NOT NULL,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS alert_rule (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_id BIGINT,
+    metric_type VARCHAR(32) NOT NULL,
+    operator VARCHAR(8) NOT NULL,
+    threshold DECIMAL(10,2) NOT NULL,
+    enabled TINYINT NOT NULL DEFAULT 1,
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS alert_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    device_id BIGINT NOT NULL,
+    metric_type VARCHAR(32) NOT NULL,
+    actual_value DECIMAL(10,2) NOT NULL,
+    threshold DECIMAL(10,2) NOT NULL,
+    message VARCHAR(512) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'PENDING',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    resolve_time TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS operation_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    module VARCHAR(64) NOT NULL,
+    action VARCHAR(64) NOT NULL,
+    detail VARCHAR(512),
+    operator VARCHAR(64) DEFAULT 'system',
+    create_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

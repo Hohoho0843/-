@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册 - 物联网设备管理平台</title>
+  <link rel="stylesheet" href="/css/common.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card">
+      <h1>物联网设备管理平台</h1>
+      <p class="subtitle">用户注册</p>
+      <form id="registerForm">
+        <div class="form-group">
+          <label for="username">用户名</label>
+          <input type="text" id="username" name="username" placeholder="请输入用户名" autocomplete="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">密码</label>
+          <input type="password" id="password" name="password" placeholder="请输入密码（至少6位）" autocomplete="new-password" required>
+        </div>
+        <div class="form-group">
+          <label for="confirmPassword">确认密码</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="请再次输入密码" autocomplete="new-password" required>
+        </div>
+        <button type="submit" class="btn-primary">注 册</button>
+        <p class="error-msg" id="errorMsg"></p>
+      </form>
+      <p class="auth-footer">已有账号？<a href="/login.html">返回登录</a></p>
+    </div>
+  </div>
+
+  <script src="/js/auth.js"></script>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const errorEl = document.getElementById('errorMsg');
+
+      if (password !== confirmPassword) {
+        errorEl.textContent = '两次输入的密码不一致';
+        return;
+      }
+
+      const result = registerUser(username, password);
+      if (result.success) {
+        alert('注册成功，请登录');
+        window.location.href = '/login.html';
+      } else {
+        errorEl.textContent = result.message;
+      }
+    });
+  </script>
+</body>
+</html>

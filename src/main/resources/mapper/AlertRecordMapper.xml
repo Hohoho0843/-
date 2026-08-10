@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.iot.platform.mapper.AlertRecordMapper">
+
+    <resultMap id="AlertRecordMap" type="com.iot.platform.entity.AlertRecord">
+        <id property="id" column="id"/>
+        <result property="deviceId" column="device_id"/>
+        <result property="deviceCode" column="device_code"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="metricType" column="metric_type"/>
+        <result property="actualValue" column="actual_value"/>
+        <result property="threshold" column="threshold"/>
+        <result property="message" column="message"/>
+        <result property="status" column="status"/>
+        <result property="createTime" column="create_time"/>
+        <result property="resolveTime" column="resolve_time"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO alert_record (device_id, metric_type, actual_value, threshold, message, status)
+        VALUES (#{deviceId}, #{metricType}, #{actualValue}, #{threshold}, #{message}, #{status})
+    </insert>
+
+    <select id="findPage" resultMap="AlertRecordMap">
+        SELECT ar.*, d.device_code, d.device_name
+        FROM alert_record ar
+        LEFT JOIN device d ON ar.device_id = d.id
+        <where>
+            <if test="deviceId != null">AND ar.device_id = #{deviceId}</if>
+            <if test="status != null and status != ''">AND ar.status = #{status}</if>
+        </where>
+        ORDER BY ar.create_time DESC
+    </select>
+
+    <update id="resolve">
+        UPDATE alert_record
+        SET status = 'RESOLVED', resolve_time = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+</mapper>
